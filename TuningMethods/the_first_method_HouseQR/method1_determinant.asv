@@ -1,0 +1,16 @@
+function det_res = method1_determinant(Phi_p, N, n, Ut, Vt, alpha)
+% Calculate detH = det(Phi*K*Phi'+alpha*I_N)
+    p = size(Phi_p, 1);
+    % Phi = QR, obtain R: p*n
+    [~, Rp] = HouseholderQR_periodic(Phi_p, N);
+    
+    % alpha*I_p+RKR'
+    Inside = semi_matrix_multiplicaiton(Ut,Vt,R');
+    Inside = R * Inside;
+    Inside = Inside + alpha*eye(p);
+    
+    % result
+    det_res = alpha^(N-p) * det(Inside);
+
+end
+

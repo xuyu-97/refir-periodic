@@ -1,0 +1,75 @@
+clear;
+% load('exm_Phi.mat');
+% Phi = Phi2;
+
+
+N = 200; n = 20;  Nd = N - n;
+d = load(['Databank/data_N3000_repi=1.mat']);
+data = d.datainfo.data(1:N,:);
+u = data(:,1);
+Phi = CalculatePsi(u, n);
+x = data(n+1:N,2);
+
+[N, n] = size(Phi);
+p = 5;
+Phi_p = Phi(1:p, 1:p);
+% x = randn(N,1);
+alpha = 0.9;
+hyper = [-4;0.950000014901161;-0.80000000000000;1.010000000000000];
+
+c = exp(hyper(1)); lam = hyper(2); rho = hyper(3); sigsqr = hyper(end);
+Ut = sqrt(c)*(lam).^(1:n); Vt = sqrt(c)*(1).^(1:n);
+% Ut = (0.2).^(1:n); Vt = (-19).^(1:n);
+Psi = CalculatePsi(u, n);
+K = tril(Ut'*Vt) + triu(Vt'*Ut,1);
+
+
+% Create instance of K=S(U,V) with rank k
+% k = 1;
+% Ut = randn(k,n); Vt = randn(k,n);
+% K = tril(Ut'*Vt) + triu(Vt'*Ut,1);
+
+%% Comparison: x'*H*x 
+% Reference
+tic
+H = Phi * K * Phi' + alpha * eye(N);
+yref = x' * H * x;
+toc
+
+% Using method 2
+tic
+y = method1_quadratic_form(Phi_p, N, n, x, Ut, Vt, alpha);
+toc
+
+% Compare the accuracy
+norm(yref - y)
+
+
+%% Comparison: x'*inv(H)*x
+% Reference
+tic
+yref = x'*inv(H)*x;
+toc
+
+% Using method 2
+tic
+y = method1_quadratic_form_inv(Phi_p, N, n, x, Ut, Vt, alpha);
+toc
+
+% Compare the accuracy
+norm(yref - y)
+
+
+%% Comparison: logdet(H)
+% Reference
+tic
+det_ref = logdet(H);
+toc
+
+% Using method 2
+tic
+det_med = method1_logdeterminant(Phi_p, N, n, Ut, Vt, alpha);
+toc
+
+% Compare the accuracy
+norm(det_ref - det_med)
